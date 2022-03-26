@@ -52,7 +52,8 @@ def verify_chain():
     return True
 
 
-while True:
+waiting_for_input = True
+while waiting_for_input:
     print('Choose operation:')
     print('1: Add new transaction value')
     print('2: Print the blocks')
@@ -68,7 +69,7 @@ while True:
     elif user_choice == 'h':
         change_first_block()
     elif user_choice == 'q':
-        break
+        waiting_for_input = False
     else:
         print('Invalid choice!')
     if not verify_chain():
