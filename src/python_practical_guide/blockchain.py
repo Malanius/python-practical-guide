@@ -2,17 +2,21 @@ blockchain = []
 
 
 def get_last_block_value():
-    """Returns  the last block value of the current blockchain."""
+    """Returns  the last block value of the current blockchain if exists, otherwise returns None"""
+    if len(blockchain) < 1:
+        return None
     return blockchain[-1]
 
 
-def add_value(transaction_amount, last_transaction=[1]):
+def add_transaction(transaction_amount, last_transaction):
     """Appends a new value as well as the last block value to the blockchain.
 
     Arguments:
         :transaction_amount: The amoint that should be added.
         :last_transaction: The last blockchain transaction (default [1]).
     """
+    if last_transaction == None:
+        last_transaction = [1]
     blockchain.append([last_transaction, transaction_amount])
 
 
@@ -31,9 +35,6 @@ def print_blocks():
         print(block)
 
 
-tx_amount = get_transaction_value()
-add_value(tx_amount)
-
 while True:
     print('Choose operation:')
     print('1: Add new transaction value')
@@ -43,7 +44,7 @@ while True:
 
     if user_choice == '1':
         tx_amount = get_transaction_value()
-        add_value(tx_amount, get_last_block_value())
+        add_transaction(tx_amount, get_last_block_value())
     elif user_choice == '2':
         print_blocks()
     elif user_choice == '3':
