@@ -36,6 +36,8 @@ def print_blocks():
     print('Blocks in chain:')
     for block in blockchain:
         print(block)
+    else:
+        print('-' * 20)
 
 
 def change_first_block():
@@ -75,5 +77,7 @@ while waiting_for_input:
     if not verify_chain():
         print('Invalid blocks in the chain!')
         break
+else:
+    print('User left!')
 
 print('Done!')
