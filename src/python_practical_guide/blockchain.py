@@ -1,3 +1,6 @@
+from pytest import skip
+
+
 blockchain = []
 
 
@@ -35,11 +38,26 @@ def print_blocks():
         print(block)
 
 
+def change_first_block():
+    if len(blockchain) > 0:
+        blockchain[0] = [2]
+
+
+def verify_chain():
+    for index, block in enumerate(blockchain):
+        if index == 0:
+            continue  # there is no previous block
+        if not block[0] == blockchain[index - 1]:
+            return False
+    return True
+
+
 while True:
     print('Choose operation:')
     print('1: Add new transaction value')
     print('2: Print the blocks')
-    print('3: Exit')
+    print('h: Manipulate chain')
+    print('q: Exit')
     user_choice = get_user_choice()
 
     if user_choice == '1':
@@ -47,9 +65,14 @@ while True:
         add_transaction(tx_amount, get_last_block_value())
     elif user_choice == '2':
         print_blocks()
-    elif user_choice == '3':
+    elif user_choice == 'h':
+        change_first_block()
+    elif user_choice == 'q':
         break
     else:
         print('Invalid choice!')
+    if not verify_chain():
+        print('Invalid blocks in the chain!')
+        break
 
 print('Done!')
