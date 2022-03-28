@@ -33,18 +33,23 @@ def add_transaction(recepient, sender=owner, amount=1.0):
     open_transactions.append(transaction)
 
 
+def calculate_block_hash(block):
+    return '-'.join([str(value) for value in block.values()])
+
+
 def mine_block():
     last_block = blockchain[-1]
     # temp hash using all block values
-    last_block_hash = '-'.join([str(value) for value in last_block.values()])
+    last_block_hash = calculate_block_hash(last_block)
     print(f"Last block hash: {last_block_hash}")
 
     new_block = {
-        'previous_hash': '',
+        'previous_hash': last_block_hash,
         'index': len(blockchain),
         'transactions': open_transactions
     }
     blockchain.append(new_block)
+    print(f"Added new block to the chain: {new_block}")
 
 
 def get_transaction_value():
@@ -68,14 +73,23 @@ def print_blocks():
 
 def change_first_block():
     if len(blockchain) > 0:
-        blockchain[0] = [2]
+        blockchain[0] = {
+            'previous_hash': '',
+            'index': 0,
+            'transactions': [{'sender': 'hack',  'recepient': 'hack', 'amount': 1_000.0}]
+        }
 
 
 def verify_chain():
     for index, block in enumerate(blockchain):
         if index == 0:
-            continue  # there is no previous block
-        if not block[0] == blockchain[index - 1]:
+            continue
+        expected_last_hash = block['previous_hash']
+        actual_last_hash = calculate_block_hash(blockchain[index - 1])
+        if expected_last_hash != actual_last_hash:
+            print(f"Previous block for block #{index} hash doesn't match!")
+            print(f"Expected: {expected_last_hash}")
+            print(f"Was: {actual_last_hash}")
             return False
     return True
 
@@ -104,9 +118,9 @@ while waiting_for_input:
         waiting_for_input = False
     else:
         print('Invalid choice!')
-    # if not verify_chain():
-    #     print('Invalid blocks in the chain!')
-    #     break
+    if not verify_chain():
+        print('Invalid blocks in the chain!')
+        break
 else:
     print('User left!')
 
