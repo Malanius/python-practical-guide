@@ -2,6 +2,8 @@ from pytest import skip
 
 
 blockchain = []
+open_transactions = []
+owner = 'malanius'
 
 
 def get_last_block_value():
@@ -11,21 +13,31 @@ def get_last_block_value():
     return blockchain[-1]
 
 
-def add_transaction(transaction_amount, last_transaction):
+def add_transaction(recepient, sender=owner, amount=1.0):
     """Appends a new value as well as the last block value to the blockchain.
 
     Arguments:
-        :transaction_amount: The amoint that should be added.
-        :last_transaction: The last blockchain transaction (default [1]).
+        :sender: The sender of the coins
+        :recepient: The recepient of the coins
+        :amount: The amount transfered  (default [1.0]).
     """
-    if last_transaction == None:
-        last_transaction = [1]
-    blockchain.append([last_transaction, transaction_amount])
+    transaction = {
+        'sender': sender,
+        'recepient': recepient,
+        'amount': amount
+    }
+    open_transactions.append(transaction)
+
+
+def mine_block():
+    pass
 
 
 def get_transaction_value():
     """Returns the transaction amount from user input."""
-    return float(input('Enter transaction amount: '))
+    recepient = input('Enter the recepient of the transaction: ')
+    amount = float(input('Enter transaction amount: '))
+    return (recepient, amount)
 
 
 def get_user_choice():
@@ -64,8 +76,9 @@ while waiting_for_input:
     user_choice = get_user_choice()
 
     if user_choice == '1':
-        tx_amount = get_transaction_value()
-        add_transaction(tx_amount, get_last_block_value())
+        recepient, amount = get_transaction_value()
+        add_transaction(recepient, amount=amount)
+        print(open_transactions)
     elif user_choice == '2':
         print_blocks()
     elif user_choice == 'h':
