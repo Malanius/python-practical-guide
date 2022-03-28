@@ -34,7 +34,17 @@ def add_transaction(recepient, sender=owner, amount=1.0):
 
 
 def mine_block():
-    pass
+    last_block = blockchain[-1]
+    # temp hash using all block values
+    last_block_hash = '-'.join([str(value) for value in last_block.values()])
+    print(f"Last block hash: {last_block_hash}")
+
+    new_block = {
+        'previous_hash': '',
+        'index': len(blockchain),
+        'transactions': open_transactions
+    }
+    blockchain.append(new_block)
 
 
 def get_transaction_value():
@@ -74,7 +84,8 @@ waiting_for_input = True
 while waiting_for_input:
     print('Choose operation:')
     print('1: Add new transaction value')
-    print('2: Print the blocks')
+    print('2: Mine a new block')
+    print('3: Print the blocks')
     print('h: Manipulate chain')
     print('q: Exit')
     user_choice = get_user_choice()
@@ -84,6 +95,8 @@ while waiting_for_input:
         add_transaction(recepient, amount=amount)
         print(open_transactions)
     elif user_choice == '2':
+        mine_block()
+    elif user_choice == '3':
         print_blocks()
     elif user_choice == 'h':
         change_first_block()
@@ -91,9 +104,9 @@ while waiting_for_input:
         waiting_for_input = False
     else:
         print('Invalid choice!')
-    if not verify_chain():
-        print('Invalid blocks in the chain!')
-        break
+    # if not verify_chain():
+    #     print('Invalid blocks in the chain!')
+    #     break
 else:
     print('User left!')
 
