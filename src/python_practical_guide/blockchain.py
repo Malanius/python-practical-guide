@@ -1,7 +1,11 @@
 from pytest import skip
 
-
-blockchain = []
+genesis_block = {
+    'previous_hash': '',
+    'index': 0,
+    'transactions': []
+}
+blockchain = [genesis_block]
 open_transactions = []
 owner = 'malanius'
 
