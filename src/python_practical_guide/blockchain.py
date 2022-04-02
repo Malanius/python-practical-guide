@@ -18,6 +18,11 @@ def get_last_block_value():
     return blockchain[-1]
 
 
+def verify_transaction(transaction):
+    sender_balance = get_balance(transaction['sender'])
+    return sender_balance >= transaction['amount']
+
+
 def add_transaction(recepient, sender=owner, amount=1.0):
     """Appends a new value as well as the last block value to the blockchain.
 
@@ -31,15 +36,23 @@ def add_transaction(recepient, sender=owner, amount=1.0):
         'recepient': recepient,
         'amount': amount
     }
-    open_transactions.append(transaction)
-    participants.add(sender)
-    participants.add(recepient)
+
+    if verify_transaction(transaction):
+        open_transactions.append(transaction)
+        participants.add(sender)
+        participants.add(recepient)
+        return True
+
+    return False
 
 
 def get_balance(participant):
     # TODO: make this work for more than one icoming/outgoing transaction to participant in the block
     tx_sender = [[tx['amount'] for tx in block['transactions'] if tx['sender'] == participant]
                  for block in blockchain]
+    open_tx_sender = [tx['amount']
+                      for tx in open_transactions if tx['sender'] == participant]
+    tx_sender.append(open_tx_sender)
     amount_sent = 0
     for tx in tx_sender:
         if len(tx) > 0:
@@ -47,6 +60,9 @@ def get_balance(participant):
 
     tx_recepient = [[tx['amount'] for tx in block['transactions'] if tx['recepient'] == participant]
                     for block in blockchain]
+    open_tx_recepient = [tx['amount']
+                         for tx in open_transactions if tx['recepient'] == participant]
+    tx_recepient.append(open_tx_recepient)
     amount_received = 0
     for tx in tx_recepient:
         if len(tx) > 0:
@@ -137,7 +153,10 @@ while waiting_for_input:
 
     if user_choice == '1':
         recepient, amount = get_transaction_value()
-        add_transaction(recepient, amount=amount)
+        if add_transaction(recepient, amount=amount):
+            print("Added transaction.")
+        else:
+            print("Transaction failed!")
         print(open_transactions)
     elif user_choice == '2':
         if mine_block():
