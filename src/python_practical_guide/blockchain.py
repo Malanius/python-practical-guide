@@ -1,3 +1,5 @@
+MINING_REWARD = 10
+
 genesis_block = {
     'previous_hash': '',
     'index': 0,
@@ -62,6 +64,13 @@ def mine_block():
     # temp hash using all block values
     last_block_hash = calculate_block_hash(last_block)
     print(f"Last block hash: {last_block_hash}")
+
+    reward_transaction = {
+        'sender': 'MINING',
+        'recepient': owner,
+        'amount': MINING_REWARD
+    }
+    open_transactions.append(reward_transaction)
 
     new_block = {
         'previous_hash': last_block_hash,
