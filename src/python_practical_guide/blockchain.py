@@ -1,5 +1,3 @@
-from pytest import skip
-
 genesis_block = {
     'previous_hash': '',
     'index': 0,
@@ -36,6 +34,25 @@ def add_transaction(recepient, sender=owner, amount=1.0):
     participants.add(recepient)
 
 
+def get_balance(participant):
+    # TODO: make this work for more than one icoming/outgoing transaction to participant in the block
+    tx_sender = [[tx['amount'] for tx in block['transactions'] if tx['sender'] == participant]
+                 for block in blockchain]
+    amount_sent = 0
+    for tx in tx_sender:
+        if len(tx) > 0:
+            amount_sent += tx[0]
+
+    tx_recepient = [[tx['amount'] for tx in block['transactions'] if tx['recepient'] == participant]
+                    for block in blockchain]
+    amount_received = 0
+    for tx in tx_recepient:
+        if len(tx) > 0:
+            amount_received += tx[0]
+
+    return amount_received - amount_sent
+
+
 def calculate_block_hash(block):
     return '-'.join([str(value) for value in block.values()])
 
@@ -53,6 +70,7 @@ def mine_block():
     }
     blockchain.append(new_block)
     print(f"Added new block to the chain: {new_block}")
+    return True
 
 
 def get_transaction_value():
@@ -113,7 +131,8 @@ while waiting_for_input:
         add_transaction(recepient, amount=amount)
         print(open_transactions)
     elif user_choice == '2':
-        mine_block()
+        if mine_block():
+            open_transactions = []
     elif user_choice == '3':
         print_blocks()
     elif user_choice == '4':
@@ -127,6 +146,7 @@ while waiting_for_input:
     if not verify_chain():
         print('Invalid blocks in the chain!')
         break
+    print(get_balance(owner))
 else:
     print('User left!')
 
