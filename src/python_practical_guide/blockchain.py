@@ -86,12 +86,13 @@ def mine_block():
         'recepient': owner,
         'amount': MINING_REWARD
     }
-    open_transactions.append(reward_transaction)
+    copied_transactions = open_transactions[:]
+    copied_transactions.append(reward_transaction)
 
     new_block = {
         'previous_hash': last_block_hash,
         'index': len(blockchain),
-        'transactions': open_transactions
+        'transactions': copied_transactions
     }
     blockchain.append(new_block)
     print(f"Added new block to the chain: {new_block}")
