@@ -1,3 +1,5 @@
+import functools
+
 MINING_REWARD = 10
 
 genesis_block = {
@@ -47,26 +49,23 @@ def add_transaction(recepient, sender=owner, amount=1.0):
 
 
 def get_balance(participant):
-    # TODO: make this work for more than one icoming/outgoing transaction to participant in the block
     tx_sender = [[tx['amount'] for tx in block['transactions'] if tx['sender'] == participant]
                  for block in blockchain]
     open_tx_sender = [tx['amount']
                       for tx in open_transactions if tx['sender'] == participant]
     tx_sender.append(open_tx_sender)
-    amount_sent = 0
-    for tx in tx_sender:
-        if len(tx) > 0:
-            amount_sent += tx[0]
+    amount_sent = functools.reduce(
+        lambda tx_sum, tx_amt: tx_sum + sum(tx_amt) if len(tx_amt) > 0 else tx_sum, tx_sender, 0)
+    print(f'sent: {amount_sent}')
 
     tx_recepient = [[tx['amount'] for tx in block['transactions'] if tx['recepient'] == participant]
                     for block in blockchain]
     open_tx_recepient = [tx['amount']
                          for tx in open_transactions if tx['recepient'] == participant]
     tx_recepient.append(open_tx_recepient)
-    amount_received = 0
-    for tx in tx_recepient:
-        if len(tx) > 0:
-            amount_received += tx[0]
+    amount_received = functools.reduce(
+        lambda tx_sum, tx_amt: tx_sum + sum(tx_amt) if len(tx_amt) > 0 else tx_sum, tx_recepient, 0)
+    print(f'recv: {amount_received}')
 
     return amount_received - amount_sent
 
@@ -175,7 +174,7 @@ while waiting_for_input:
     if not verify_chain():
         print('Invalid blocks in the chain!')
         break
-    print(get_balance(owner))
+    print(f'Balance of {owner}: {get_balance(owner):6.2f}')
 else:
     print('User left!')
 
