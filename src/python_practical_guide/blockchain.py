@@ -1,6 +1,7 @@
 import functools
 import json
 import hashlib
+from collections import OrderedDict
 
 MINING_REWARD = 10
 
@@ -36,12 +37,8 @@ def add_transaction(recepient, sender=owner, amount=1.0):
         :recepient: The recepient of the coins
         :amount: The amount transfered  (default [1.0]).
     """
-    transaction = {
-        'sender': sender,
-        'recepient': recepient,
-        'amount': amount
-    }
-
+    transaction = OrderedDict(
+        [('sender', sender), ('recepient', recepient), ('amount', amount)])
     if verify_transaction(transaction):
         open_transactions.append(transaction)
         participants.add(sender)
@@ -74,7 +71,7 @@ def get_balance(participant):
 
 
 def calculate_block_hash(block):
-    return hashlib.sha256(json.dumps(block).encode()).hexdigest()
+    return hashlib.sha256(json.dumps(block, sort_keys=True).encode()).hexdigest()
 
 
 def is_valid_proof(transactions, last_hash, proof_number):
@@ -99,12 +96,8 @@ def mine_block():
     last_block_hash = calculate_block_hash(last_block)
     print(f"Last block hash: {last_block_hash}")
     proof = pow()
-
-    reward_transaction = {
-        'sender': 'MINING',
-        'recepient': owner,
-        'amount': MINING_REWARD
-    }
+    reward_transaction = OrderedDict(
+        [('sender', 'MINING'), ('recepient', owner), ('amount', MINING_REWARD)])
     copied_transactions = open_transactions[:]
     copied_transactions.append(reward_transaction)
 
