@@ -1,7 +1,8 @@
 import functools
-import json
 import hashlib
 from collections import OrderedDict
+
+import hash_util
 
 MINING_REWARD = 10
 
@@ -70,10 +71,6 @@ def get_balance(participant):
     return amount_received - amount_sent
 
 
-def calculate_block_hash(block):
-    return hashlib.sha256(json.dumps(block, sort_keys=True).encode()).hexdigest()
-
-
 def is_valid_proof(transactions, last_hash, proof_number):
     guess = f"{transactions}{last_hash}{proof_number}".encode()
     guess_hash = hashlib.sha256(guess).hexdigest()
@@ -83,7 +80,7 @@ def is_valid_proof(transactions, last_hash, proof_number):
 
 def pow():
     last_block = blockchain[-1]
-    last_hash = calculate_block_hash(last_block)
+    last_hash = hash_util.calculate_block_hash(last_block)
     proof = 0
     while not is_valid_proof(open_transactions, last_hash, proof):
         proof += 1
@@ -93,7 +90,7 @@ def pow():
 def mine_block():
     last_block = blockchain[-1]
     # temp hash using all block values
-    last_block_hash = calculate_block_hash(last_block)
+    last_block_hash = hash_util.calculate_block_hash(last_block)
     print(f"Last block hash: {last_block_hash}")
     proof = pow()
     reward_transaction = OrderedDict(
@@ -145,7 +142,8 @@ def verify_chain():
         if index == 0:
             continue
         expected_last_hash = block['previous_hash']
-        actual_last_hash = calculate_block_hash(blockchain[index - 1])
+        actual_last_hash = hash_util.calculate_block_hash(
+            blockchain[index - 1])
         if expected_last_hash != actual_last_hash:
             print(f"Previous block for block #{index} hash doesn't match!")
             print(f"Expected: {expected_last_hash}")
