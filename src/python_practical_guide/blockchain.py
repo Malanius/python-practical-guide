@@ -1,4 +1,6 @@
 import functools
+import json
+import hashlib
 
 MINING_REWARD = 10
 
@@ -71,7 +73,7 @@ def get_balance(participant):
 
 
 def calculate_block_hash(block):
-    return '-'.join([str(value) for value in block.values()])
+    return hashlib.sha256(json.dumps(block).encode()).hexdigest()
 
 
 def mine_block():
