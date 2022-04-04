@@ -7,7 +7,8 @@ MINING_REWARD = 10
 genesis_block = {
     'previous_hash': '',
     'index': 0,
-    'transactions': []
+    'transactions': [],
+    'proof': 0
 }
 blockchain = [genesis_block]
 open_transactions = []
@@ -76,11 +77,28 @@ def calculate_block_hash(block):
     return hashlib.sha256(json.dumps(block).encode()).hexdigest()
 
 
+def is_valid_proof(transactions, last_hash, proof_number):
+    guess = f"{transactions}{last_hash}{proof_number}".encode()
+    guess_hash = hashlib.sha256(guess).hexdigest()
+    print(f"Guess hash: {guess_hash}")
+    return guess_hash[0:2] == '00'
+
+
+def pow():
+    last_block = blockchain[-1]
+    last_hash = calculate_block_hash(last_block)
+    proof = 0
+    while not is_valid_proof(open_transactions, last_hash, proof):
+        proof += 1
+    return proof
+
+
 def mine_block():
     last_block = blockchain[-1]
     # temp hash using all block values
     last_block_hash = calculate_block_hash(last_block)
     print(f"Last block hash: {last_block_hash}")
+    proof = pow()
 
     reward_transaction = {
         'sender': 'MINING',
@@ -93,7 +111,8 @@ def mine_block():
     new_block = {
         'previous_hash': last_block_hash,
         'index': len(blockchain),
-        'transactions': copied_transactions
+        'transactions': copied_transactions,
+        'proof': proof
     }
     blockchain.append(new_block)
     print(f"Added new block to the chain: {new_block}")
@@ -138,6 +157,9 @@ def verify_chain():
             print(f"Previous block for block #{index} hash doesn't match!")
             print(f"Expected: {expected_last_hash}")
             print(f"Was: {actual_last_hash}")
+            return False
+        if not is_valid_proof(block['transactions'][:-1], actual_last_hash, block['proof']):
+            print(f"Block contains invalid PoW: {block}")
             return False
     return True
 
