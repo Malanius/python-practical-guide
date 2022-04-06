@@ -1,12 +1,22 @@
 import json
+import pickle
 from collections import OrderedDict
 
 DATA_FILE = 'blockchain.json'
+DATA_FILE_PICKLE = 'blockchain.pickle'
 
 
 def save_data(blockchain, open_transactions):
     with open(DATA_FILE, mode='w') as file:
         file.write(json.dumps({
+            'blockchain': blockchain,
+            'open_transactions': open_transactions
+        }))
+
+
+def save_data_pickle(blockchain, open_transactions):
+    with open(DATA_FILE_PICKLE, mode='wb') as file:
+        file.write(pickle.dumps({
             'blockchain': blockchain,
             'open_transactions': open_transactions
         }))
@@ -29,3 +39,8 @@ def load_data():
         'blockchain': blockchain,
         'open_transactions': open_transactions
     }
+
+
+def load_data_pickle():
+    with open(DATA_FILE_PICKLE, mode='rb') as file:
+        return pickle.loads(file.read())
