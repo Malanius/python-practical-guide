@@ -45,7 +45,7 @@ def add_transaction(recepient, sender=owner, amount=1.0):
         open_transactions.append(transaction)
         participants.add(sender)
         participants.add(recepient)
-        file_util.save_data_pickle(blockchain, open_transactions)
+        file_util.save_data(blockchain, open_transactions)
         return True
 
     return False
@@ -157,7 +157,7 @@ def verify_chain():
     return True
 
 
-data = file_util.load_data_pickle()
+data = file_util.load_data()
 blockchain = data['blockchain']
 open_transactions = data['open_transactions']
 waiting_for_input = True
@@ -181,7 +181,7 @@ while waiting_for_input:
     elif user_choice == '2':
         if mine_block():
             open_transactions = []
-            file_util.save_data_pickle(blockchain, open_transactions)
+            file_util.save_data(blockchain, open_transactions)
     elif user_choice == '3':
         print_blocks()
     elif user_choice == '4':
