@@ -1,13 +1,16 @@
 import functools
 import hashlib
 from collections import OrderedDict
+from typing import List
 
 import hash_util
 import file_util
 
+from block import Block
+
 MINING_REWARD = 10
 
-blockchain = []
+blockchain: List[Block] = []
 open_transactions = []
 owner = 'malanius'
 participants = {'malanius'}
@@ -46,7 +49,7 @@ def add_transaction(recepient, sender=owner, amount=1.0):
 
 
 def get_balance(participant):
-    tx_sender = [[tx['amount'] for tx in block['transactions'] if tx['sender'] == participant]
+    tx_sender = [[tx['amount'] for tx in block.transactions if tx['sender'] == participant]
                  for block in blockchain]
     open_tx_sender = [tx['amount']
                       for tx in open_transactions if tx['sender'] == participant]
@@ -54,7 +57,7 @@ def get_balance(participant):
     amount_sent = functools.reduce(
         lambda tx_sum, tx_amt: tx_sum + sum(tx_amt) if len(tx_amt) > 0 else tx_sum, tx_sender, 0)
 
-    tx_recepient = [[tx['amount'] for tx in block['transactions'] if tx['recepient'] == participant]
+    tx_recepient = [[tx['amount'] for tx in block.transactions if tx['recepient'] == participant]
                     for block in blockchain]
     open_tx_recepient = [tx['amount']
                          for tx in open_transactions if tx['recepient'] == participant]
@@ -92,12 +95,8 @@ def mine_block():
     copied_transactions = open_transactions[:]
     copied_transactions.append(reward_transaction)
 
-    new_block = {
-        'previous_hash': last_block_hash,
-        'index': len(blockchain),
-        'transactions': copied_transactions,
-        'proof': proof
-    }
+    new_block = Block(len(blockchain), last_block_hash,
+                      copied_transactions, proof)
     blockchain.append(new_block)
     print(f"Added new block to the chain: {new_block}")
     return True
@@ -122,20 +121,11 @@ def print_blocks():
         print('-' * 20)
 
 
-def change_first_block():
-    if len(blockchain) > 0:
-        blockchain[0] = {
-            'previous_hash': '',
-            'index': 0,
-            'transactions': [{'sender': 'hack',  'recepient': 'hack', 'amount': 1_000.0}]
-        }
-
-
 def verify_chain():
     for index, block in enumerate(blockchain):
         if index == 0:
             continue
-        expected_last_hash = block['previous_hash']
+        expected_last_hash = block.previous_hash
         actual_last_hash = hash_util.calculate_block_hash(
             blockchain[index - 1])
         if expected_last_hash != actual_last_hash:
@@ -143,7 +133,7 @@ def verify_chain():
             print(f"Expected: {expected_last_hash}")
             print(f"Was: {actual_last_hash}")
             return False
-        if not is_valid_proof(block['transactions'][:-1], actual_last_hash, block['proof']):
+        if not is_valid_proof(block.transactions[:-1], actual_last_hash, block.prof):
             print(f"Block contains invalid PoW: {block}")
             return False
     return True
@@ -159,7 +149,6 @@ while waiting_for_input:
     print('2: Mine a new block')
     print('3: Print the blocks')
     print('4: Print the participants')
-    print('h: Manipulate chain')
     print('q: Exit')
     user_choice = get_user_choice()
 
@@ -178,8 +167,6 @@ while waiting_for_input:
         print_blocks()
     elif user_choice == '4':
         print(participants)
-    elif user_choice == 'h':
-        change_first_block()
     elif user_choice == 'q':
         waiting_for_input = False
     else:

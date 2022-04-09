@@ -1,21 +1,19 @@
 import json
 from collections import OrderedDict
+from typing import List
+
+from block import Block
 
 DATA_FILE = 'blockchain.json'
-
-genesis_block = {
-    'previous_hash': '',
-    'index': 0,
-    'transactions': [],
-    'proof': 0
-}
+genesis_block = Block(0, '', [], 0, 0)
 
 
-def save_data(blockchain, open_transactions):
+def save_data(blockchain: List[Block], open_transactions: List[OrderedDict]):
     try:
         with open(DATA_FILE, mode='w') as file:
+            dumpable_chain = [block.__dict__ for block in blockchain]
             file.write(json.dumps({
-                'blockchain': blockchain,
+                'blockchain': dumpable_chain,
                 'open_transactions': open_transactions
             }))
     except IOError:
@@ -32,15 +30,13 @@ def load_data():
     try:
         with open(DATA_FILE, mode='r') as file:
             file_data = json.loads(file.read())
-        blockchain = [{'previous_hash': block['previous_hash'],
-                       'index': block['index'],
-                       'proof': block['proof'],
-                       'transactions': convert_transactions(block['transactions'])
-                       } for block in file_data['blockchain']]
+        blockchain = [Block(block['index'], block['previous_hash'], convert_transactions(
+            block['transactions']), block['proof'], block['time']) for block in file_data['blockchain']]
         open_transactions = convert_transactions(
             file_data['open_transactions'])
-    except IOError:
-        print(f'File {DATA_FILE} not found. Initializing genesis block.')
+    except (IOError, IndexError):
+        print(
+            f'File {DATA_FILE} not found or empty. Initializing genesis block.')
         blockchain = [genesis_block]
     return {
         'blockchain': blockchain,
