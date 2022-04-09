@@ -30,5 +30,5 @@ class Verification:
         return True
 
     def is_valid_transaction(self, transaction: Transaction, get_balance: Callable):
-        sender_balance = get_balance(transaction.sender)
+        sender_balance = get_balance()
         return sender_balance >= transaction.amount

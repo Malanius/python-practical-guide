@@ -1,153 +1,118 @@
 import functools
-from typing import Iterable, List
+import json
+from typing import List, TypedDict
 
 import hash_util
-import file_util
-
 from block import Block
 from verification import Verification
 from transaction import Transaction
 
 MINING_REWARD = 10
-
-blockchain: List[Block] = []
-open_transactions: List[Transaction] = []
-owner = 'malanius'
-participants = {'malanius'}
+DATA_FILE = 'blockchain.json'
 verifyer = Verification()
+genesis_block = Block(0, '', [], 0, 0)
 
 
-def get_last_block_value():
-    """Returns  the last block value of the current blockchain if exists, otherwise returns None"""
-    if len(blockchain) < 1:
-        return None
-    return blockchain[-1]
+class Blockchain:
+    def __init__(self, hosting_node) -> None:
+        self.chain: List[Block] = [genesis_block]
+        self.open_transactions: List[Transaction] = []
+        self.hosting_node = hosting_node
+        self.load_data()
 
+    def convert_transactions(self, transactions) -> List[Transaction]:
+        return [Transaction(tx['sender'], tx['recipient'], tx['amount']) for tx in transactions]
 
-def add_transaction(recipient: str, sender=owner, amount=1.0):
-    """Appends a new value as well as the last block value to the blockchain.
+    def load_data(self) -> None:
+        try:
+            with open(DATA_FILE, mode='r') as file:
+                file_data = json.loads(file.read())
+            blockchain = [Block(block['index'], block['previous_hash'], self.convert_transactions(
+                block['transactions']), block['proof'], block['timestamp']) for block in file_data['blockchain']]
+            open_transactions = self.convert_transactions(
+                file_data['open_transactions'])
+            self.chain = blockchain
+            self.open_transactions = open_transactions
+        except (IOError, IndexError):
+            print(f'File {DATA_FILE} not found or empty!')
 
-    Arguments:
-        :sender: The sender of the coins
-        :recipient: The recipient of the coins
-        :amount: The amount transfered  (default [1.0]).
-    """
-    transaction = Transaction(sender, recipient, amount)
-    if verifyer.is_valid_transaction(transaction, get_balance):
-        open_transactions.append(transaction)
-        participants.add(sender)
-        participants.add(recipient)
-        file_util.save_data(blockchain, open_transactions)
-        print(f'Added transaction: {transaction}')
-        return True
+    def save_data(self) -> None:
+        try:
+            with open(DATA_FILE, mode='w') as file:
+                dumpable_chain = [block.convert_to_dumpable_block()
+                                  for block in self.chain]
+                dumpable_transactions = [
+                    transaction.__dict__ for transaction in self.open_transactions]
+                file.write(json.dumps({
+                    'blockchain': dumpable_chain,
+                    'open_transactions': dumpable_transactions
+                }))
+        except IOError:
+            print('Saving data failed!')
 
-    return False
+    def get_last_block_value(self) -> Block:
+        """Returns  the last block value of the current blockchain if exists, otherwise returns None"""
+        if len(self.chain) < 1:
+            return None
+        return self.chain[-1]
 
+    def add_transaction(self, recipient: str, sender, amount=1.0) -> bool:
+        """Appends a new value as well as the last block value to the blockchain.
 
-def get_balance(participant: str) -> float:
-    tx_sender = [[tx.amount for tx in block.transactions if tx.sender == participant]
-                 for block in blockchain]
-    open_tx_sender = [
-        tx.amount for tx in open_transactions if tx.sender == participant]
-    tx_sender.append(open_tx_sender)
-    amount_sent = functools.reduce(
-        lambda tx_sum, tx_amt: tx_sum + sum(tx_amt) if len(tx_amt) > 0 else tx_sum, tx_sender, 0)
+        Arguments:
+            :sender: The sender of the coins
+            :recipient: The recipient of the coins
+            :amount: The amount transfered  (default [1.0]).
+        """
+        transaction = Transaction(sender, recipient, amount)
+        if verifyer.is_valid_transaction(transaction, self.get_balance):
+            self.open_transactions.append(transaction)
+            self.save_data()
+            print(f'Added transaction: {transaction}')
+            return True
 
-    tx_recipient = [[tx.amount for tx in block.transactions if tx.recipient == participant]
-                    for block in blockchain]
-    open_tx_recipient = [tx.amount
-                         for tx in open_transactions if tx.recipient == participant]
-    tx_recipient.append(open_tx_recipient)
-    amount_received = functools.reduce(
-        lambda tx_sum, tx_amt: tx_sum + sum(tx_amt) if len(tx_amt) > 0 else tx_sum, tx_recipient, 0)
+        return False
 
-    return amount_received - amount_sent
+    def get_balance(self) -> float:
+        participant = self.hosting_node
+        tx_sender = [[tx.amount for tx in block.transactions if tx.sender == participant]
+                     for block in self.chain]
+        open_tx_sender = [
+            tx.amount for tx in self.open_transactions if tx.sender == participant]
+        tx_sender.append(open_tx_sender)
+        amount_sent = functools.reduce(
+            lambda tx_sum, tx_amt: tx_sum + sum(tx_amt) if len(tx_amt) > 0 else tx_sum, tx_sender, 0)
 
+        tx_recipient = [[tx.amount for tx in block.transactions if tx.recipient == participant]
+                        for block in self.chain]
+        open_tx_recipient = [tx.amount
+                             for tx in self.open_transactions if tx.recipient == participant]
+        tx_recipient.append(open_tx_recipient)
+        amount_received = functools.reduce(
+            lambda tx_sum, tx_amt: tx_sum + sum(tx_amt) if len(tx_amt) > 0 else tx_sum, tx_recipient, 0)
 
-def pow():
-    last_block = blockchain[-1]
-    last_hash = hash_util.calculate_block_hash(last_block)
-    proof = 0
-    while not verifyer.is_valid_proof(open_transactions, last_hash, proof):
-        proof += 1
-    return proof
+        return amount_received - amount_sent
 
+    def pow(self) -> int:
+        last_block = self.chain[-1]
+        last_hash = hash_util.calculate_block_hash(last_block)
+        proof = 0
+        while not verifyer.is_valid_proof(self.open_transactions, last_hash, proof):
+            proof += 1
+        return proof
 
-def mine_block():
-    last_block = blockchain[-1]
-    last_block_hash = hash_util.calculate_block_hash(last_block)
-    print(f'Last block hash: {last_block_hash}')
-    proof = pow()
-    reward_transaction = Transaction('MINING', owner, MINING_REWARD)
-    copied_transactions = open_transactions[:]
-    copied_transactions.append(reward_transaction)
+    def mine_block(self) -> None:
+        last_block = self.chain[-1]
+        last_block_hash = hash_util.calculate_block_hash(last_block)
+        proof = self.pow()
+        reward_transaction = Transaction(
+            'MINING', self.hosting_node, MINING_REWARD)
+        copied_transactions = self.open_transactions[:]
+        copied_transactions.append(reward_transaction)
 
-    new_block = Block(len(blockchain), last_block_hash,
-                      copied_transactions, proof)
-    blockchain.append(new_block)
-    print(f'Added new block to the chain: {new_block}')
-    return True
-
-
-def get_transaction_value():
-    """Returns the transaction amount from user input."""
-    recipient = input('Enter the recipient of the transaction: ')
-    amount = float(input('Enter transaction amount: '))
-    return (recipient, amount)
-
-
-def get_user_choice():
-    return input('Your choice: ')
-
-
-def print_iterable(iterable: Iterable, message: str):
-    print(message)
-    print('-' * 20)
-    for item in iterable:
-        print(item)
-    else:
-        print('-' * 20)
-
-
-data = file_util.load_data()
-blockchain = data['blockchain']
-open_transactions = data['open_transactions']
-waiting_for_input = True
-while waiting_for_input:
-    print('Choose operation:')
-    print('1: Add new transaction value')
-    print('2: Mine a new block')
-    print('3: Print the blocks')
-    print('4: Print open transactions')
-    print('5: Print the participants')
-    print('q: Exit')
-    user_choice = get_user_choice()
-
-    if user_choice == '1':
-        recipient, amount = get_transaction_value()
-        if add_transaction(recipient, amount=amount):
-            print('Transaction sucessful.')
-        else:
-            print('Transaction failed!')
-    elif user_choice == '2':
-        if mine_block():
-            open_transactions = []
-            file_util.save_data(blockchain, open_transactions)
-    elif user_choice == '3':
-        print_iterable(blockchain, 'Blocks in chain:')
-    elif user_choice == '4':
-        print_iterable(open_transactions, 'Oepn transactions:')
-    elif user_choice == '5':
-        print_iterable(participants, 'Participants:')
-    elif user_choice == 'q':
-        waiting_for_input = False
-    else:
-        print('Invalid choice!')
-    if not verifyer.is_valid_chain(blockchain):
-        print('Invalid blocks in the chain!')
-        break
-    print(f'Balance of {owner}: {get_balance(owner):6.2f}')
-else:
-    print('User left!')
-
-print('Done!')
+        new_block = Block(len(self.chain), last_block_hash,
+                          copied_transactions, proof)
+        self.chain.append(new_block)
+        print(f'Added new block to the chain: {new_block}')
+        self.open_transactions = []
+        self.save_data()
