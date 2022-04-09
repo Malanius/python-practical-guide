@@ -9,7 +9,6 @@ from transaction import Transaction
 
 MINING_REWARD = 10
 DATA_FILE = 'blockchain.json'
-verifyer = Verification()
 genesis_block = Block(0, '', [], 0, 0)
 
 
@@ -65,7 +64,7 @@ class Blockchain:
             :amount: The amount transfered  (default [1.0]).
         """
         transaction = Transaction(sender, recipient, amount)
-        if verifyer.is_valid_transaction(transaction, self.get_balance):
+        if Verification.is_valid_transaction(transaction, self.get_balance):
             self.open_transactions.append(transaction)
             self.save_data()
             print(f'Added transaction: {transaction}')
@@ -97,7 +96,7 @@ class Blockchain:
         last_block = self.chain[-1]
         last_hash = hash_util.calculate_block_hash(last_block)
         proof = 0
-        while not verifyer.is_valid_proof(self.open_transactions, last_hash, proof):
+        while not Verification.is_valid_proof(self.open_transactions, last_hash, proof):
             proof += 1
         return proof
 
