@@ -43,6 +43,7 @@ def add_transaction(recipient: str, sender=owner, amount=1.0):
         participants.add(sender)
         participants.add(recipient)
         file_util.save_data(blockchain, open_transactions)
+        print(f'Added transaction: {transaction}')
         return True
 
     return False
@@ -69,9 +70,8 @@ def get_balance(participant: str) -> float:
 
 
 def is_valid_proof(transactions: List[Transaction], last_hash: str, proof_number: int):
-    guess = f"{[tx.to_ordered_dict() for tx in transactions]}{last_hash}{proof_number}".encode()
+    guess = f'{[tx.to_ordered_dict() for tx in transactions]}{last_hash}{proof_number}'.encode()
     guess_hash = hashlib.sha256(guess).hexdigest()
-    print(f"Guess hash: {guess_hash}")
     return guess_hash[0:2] == '00'
 
 
@@ -87,7 +87,7 @@ def pow():
 def mine_block():
     last_block = blockchain[-1]
     last_block_hash = hash_util.calculate_block_hash(last_block)
-    print(f"Last block hash: {last_block_hash}")
+    print(f'Last block hash: {last_block_hash}')
     proof = pow()
     reward_transaction = Transaction('MINING', owner, MINING_REWARD)
     copied_transactions = open_transactions[:]
@@ -96,7 +96,7 @@ def mine_block():
     new_block = Block(len(blockchain), last_block_hash,
                       copied_transactions, proof)
     blockchain.append(new_block)
-    print(f"Added new block to the chain: {new_block}")
+    print(f'Added new block to the chain: {new_block}')
     return True
 
 
@@ -113,8 +113,27 @@ def get_user_choice():
 
 def print_blocks():
     print('Blocks in chain:')
+    print('-' * 20)
     for block in blockchain:
         print(block)
+    else:
+        print('-' * 20)
+
+
+def print_open_transactions():
+    print('Open transactions:')
+    print('-' * 20)
+    for transaction in open_transactions:
+        print(transaction)
+    else:
+        print('-' * 20)
+
+
+def print_participants():
+    print('Participants:')
+    print('-' * 20)
+    for participant in participants:
+        print(participant)
     else:
         print('-' * 20)
 
@@ -128,11 +147,11 @@ def verify_chain():
             blockchain[index - 1])
         if expected_last_hash != actual_last_hash:
             print(f"Previous block for block #{index} hash doesn't match!")
-            print(f"Expected: {expected_last_hash}")
-            print(f"Was: {actual_last_hash}")
+            print(f'Expected: {expected_last_hash}')
+            print(f'Was: {actual_last_hash}')
             return False
         if not is_valid_proof(block.transactions[:-1], actual_last_hash, block.proof):
-            print(f"Block contains invalid PoW: {block}")
+            print(f'Block contains invalid PoW: {block}')
             return False
     return True
 
@@ -146,17 +165,17 @@ while waiting_for_input:
     print('1: Add new transaction value')
     print('2: Mine a new block')
     print('3: Print the blocks')
-    print('4: Print the participants')
+    print('4: Print open transactions')
+    print('5: Print the participants')
     print('q: Exit')
     user_choice = get_user_choice()
 
     if user_choice == '1':
         recipient, amount = get_transaction_value()
         if add_transaction(recipient, amount=amount):
-            print("Added transaction.")
+            print('Transaction sucessful.')
         else:
-            print("Transaction failed!")
-        print(open_transactions)
+            print('Transaction failed!')
     elif user_choice == '2':
         if mine_block():
             open_transactions = []
@@ -164,7 +183,9 @@ while waiting_for_input:
     elif user_choice == '3':
         print_blocks()
     elif user_choice == '4':
-        print(participants)
+        print_open_transactions()
+    elif user_choice == '5':
+        print_participants()
     elif user_choice == 'q':
         waiting_for_input = False
     else:

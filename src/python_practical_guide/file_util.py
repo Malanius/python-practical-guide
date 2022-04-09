@@ -9,18 +9,11 @@ DATA_FILE = 'blockchain.json'
 genesis_block = Block(0, '', [], 0, 0)
 
 
-def convert_to_dumpable_block(block: Block) -> dict:
-    dumpable_block = block.__dict__.copy()
-    dumpable_block['transactions'] = [tx.to_ordered_dict()
-                                      for tx in dumpable_block['transactions']]
-    return dumpable_block
-
-
 def save_data(blockchain: List[Block], open_transactions: List[Transaction]):
     try:
         with open(DATA_FILE, mode='w') as file:
-            dumpable_chain = [convert_to_dumpable_block(
-                block) for block in blockchain]
+            dumpable_chain = [block.convert_to_dumpable_block()
+                              for block in blockchain]
             dumpable_transactions = [
                 transaction.__dict__ for transaction in open_transactions]
             file.write(json.dumps({
