@@ -1,12 +1,11 @@
 import functools
-import hashlib
-from collections import OrderedDict
-from typing import List
+from typing import Iterable, List
 
 import hash_util
 import file_util
 
 from block import Block
+from verification import Verification
 from transaction import Transaction
 
 MINING_REWARD = 10
@@ -15,6 +14,7 @@ blockchain: List[Block] = []
 open_transactions: List[Transaction] = []
 owner = 'malanius'
 participants = {'malanius'}
+verifyer = Verification()
 
 
 def get_last_block_value():
@@ -22,11 +22,6 @@ def get_last_block_value():
     if len(blockchain) < 1:
         return None
     return blockchain[-1]
-
-
-def verify_transaction(transaction: Transaction):
-    sender_balance = get_balance(transaction.sender)
-    return sender_balance >= transaction.amount
 
 
 def add_transaction(recipient: str, sender=owner, amount=1.0):
@@ -38,7 +33,7 @@ def add_transaction(recipient: str, sender=owner, amount=1.0):
         :amount: The amount transfered  (default [1.0]).
     """
     transaction = Transaction(sender, recipient, amount)
-    if verify_transaction(transaction):
+    if verifyer.is_valid_transaction(transaction, get_balance):
         open_transactions.append(transaction)
         participants.add(sender)
         participants.add(recipient)
@@ -69,17 +64,11 @@ def get_balance(participant: str) -> float:
     return amount_received - amount_sent
 
 
-def is_valid_proof(transactions: List[Transaction], last_hash: str, proof_number: int):
-    guess = f'{[tx.to_ordered_dict() for tx in transactions]}{last_hash}{proof_number}'.encode()
-    guess_hash = hashlib.sha256(guess).hexdigest()
-    return guess_hash[0:2] == '00'
-
-
 def pow():
     last_block = blockchain[-1]
     last_hash = hash_util.calculate_block_hash(last_block)
     proof = 0
-    while not is_valid_proof(open_transactions, last_hash, proof):
+    while not verifyer.is_valid_proof(open_transactions, last_hash, proof):
         proof += 1
     return proof
 
@@ -111,49 +100,13 @@ def get_user_choice():
     return input('Your choice: ')
 
 
-def print_blocks():
-    print('Blocks in chain:')
+def print_iterable(iterable: Iterable, message: str):
+    print(message)
     print('-' * 20)
-    for block in blockchain:
-        print(block)
+    for item in iterable:
+        print(item)
     else:
         print('-' * 20)
-
-
-def print_open_transactions():
-    print('Open transactions:')
-    print('-' * 20)
-    for transaction in open_transactions:
-        print(transaction)
-    else:
-        print('-' * 20)
-
-
-def print_participants():
-    print('Participants:')
-    print('-' * 20)
-    for participant in participants:
-        print(participant)
-    else:
-        print('-' * 20)
-
-
-def verify_chain():
-    for index, block in enumerate(blockchain):
-        if index == 0:
-            continue
-        expected_last_hash = block.previous_hash
-        actual_last_hash = hash_util.calculate_block_hash(
-            blockchain[index - 1])
-        if expected_last_hash != actual_last_hash:
-            print(f"Previous block for block #{index} hash doesn't match!")
-            print(f'Expected: {expected_last_hash}')
-            print(f'Was: {actual_last_hash}')
-            return False
-        if not is_valid_proof(block.transactions[:-1], actual_last_hash, block.proof):
-            print(f'Block contains invalid PoW: {block}')
-            return False
-    return True
 
 
 data = file_util.load_data()
@@ -181,16 +134,16 @@ while waiting_for_input:
             open_transactions = []
             file_util.save_data(blockchain, open_transactions)
     elif user_choice == '3':
-        print_blocks()
+        print_iterable(blockchain, 'Blocks in chain:')
     elif user_choice == '4':
-        print_open_transactions()
+        print_iterable(open_transactions, 'Oepn transactions:')
     elif user_choice == '5':
-        print_participants()
+        print_iterable(participants, 'Participants:')
     elif user_choice == 'q':
         waiting_for_input = False
     else:
         print('Invalid choice!')
-    if not verify_chain():
+    if not verifyer.is_valid_chain(blockchain):
         print('Invalid blocks in the chain!')
         break
     print(f'Balance of {owner}: {get_balance(owner):6.2f}')
