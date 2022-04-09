@@ -15,13 +15,18 @@ genesis_block = Block(0, '', [], 0, 0)
 
 class Blockchain:
     def __init__(self, hosting_node) -> None:
-        self.__chain: List[Block] = [genesis_block]
+        self.chain: List[Block] = [genesis_block]
         self.__open_transactions: List[Transaction] = []
         self.__hosting_node = hosting_node
         self.load_data()
 
-    def get_chain(self):
+    @property
+    def chain(self):
         return deepcopy(self.__chain)
+
+    @chain.setter
+    def chain(self, val):
+        self.__chain = val
 
     def get_open_transactions(self):
         return self.__open_transactions[:]
@@ -37,7 +42,7 @@ class Blockchain:
                 block['transactions']), block['proof'], block['timestamp']) for block in file_data['blockchain']]
             open_transactions = self.convert_transactions(
                 file_data['open_transactions'])
-            self.__chain = blockchain
+            self.chain = blockchain
             self.__open_transactions = open_transactions
         except (IOError, IndexError):
             print(f'File {DATA_FILE} not found or empty!')
