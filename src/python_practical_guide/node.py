@@ -37,7 +37,7 @@ class Node:
             print('2: Mine a new block')
             print('3: Print the blocks')
             print('4: Print open transactions')
-            print('4: Validate open transactions')
+            print('5: Validate open transactions')
             print('q: Exit')
             user_choice = self.get_user_choice()
 
@@ -50,12 +50,12 @@ class Node:
             elif user_choice == '2':
                 self.blockchain.mine_block()
             elif user_choice == '3':
-                self.print_iterable(self.blockchain.chain, 'Blocks in chain:')
+                self.print_iterable(self.blockchain.get_chain(), 'Blocks in chain:')
             elif user_choice == '4':
                 self.print_iterable(
-                    self.blockchain.open_transactions, 'Open transactions:')
+                    self.blockchain.get_open_transactions(), 'Open transactions:')
             elif user_choice == '5':
-                if Verification.verify_transactions(self.blockchain.open_transactions, self.blockchain.get_balance):
+                if Verification.verify_transactions(self.blockchain.get_open_transactions(), self.blockchain.get_balance):
                     print('All open transactions are valid.')
                 else:
                     print('There are invalid transactions!')
@@ -63,7 +63,7 @@ class Node:
                 waiting_for_input = False
             else:
                 print('Invalid choice!')
-            if not Verification.is_valid_chain(self.blockchain.chain):
+            if not Verification.is_valid_chain(self.blockchain.get_chain()):
                 print('Invalid blocks in the chain!')
                 break
             print(

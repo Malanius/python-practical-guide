@@ -1,3 +1,4 @@
+from copy import deepcopy
 import functools
 import json
 from typing import List, TypedDict
@@ -14,10 +15,16 @@ genesis_block = Block(0, '', [], 0, 0)
 
 class Blockchain:
     def __init__(self, hosting_node) -> None:
-        self.chain: List[Block] = [genesis_block]
-        self.open_transactions: List[Transaction] = []
-        self.hosting_node = hosting_node
+        self.__chain: List[Block] = [genesis_block]
+        self.__open_transactions: List[Transaction] = []
+        self.__hosting_node = hosting_node
         self.load_data()
+
+    def get_chain(self):
+        return deepcopy(self.__chain)
+
+    def get_open_transactions(self):
+        return self.__open_transactions[:]
 
     def convert_transactions(self, transactions) -> List[Transaction]:
         return [Transaction(tx['sender'], tx['recipient'], tx['amount']) for tx in transactions]
@@ -30,8 +37,8 @@ class Blockchain:
                 block['transactions']), block['proof'], block['timestamp']) for block in file_data['blockchain']]
             open_transactions = self.convert_transactions(
                 file_data['open_transactions'])
-            self.chain = blockchain
-            self.open_transactions = open_transactions
+            self.__chain = blockchain
+            self.__open_transactions = open_transactions
         except (IOError, IndexError):
             print(f'File {DATA_FILE} not found or empty!')
 
@@ -39,9 +46,9 @@ class Blockchain:
         try:
             with open(DATA_FILE, mode='w') as file:
                 dumpable_chain = [block.convert_to_dumpable_block()
-                                  for block in self.chain]
+                                  for block in self.__chain]
                 dumpable_transactions = [
-                    transaction.__dict__ for transaction in self.open_transactions]
+                    transaction.__dict__ for transaction in self.__open_transactions]
                 file.write(json.dumps({
                     'blockchain': dumpable_chain,
                     'open_transactions': dumpable_transactions
@@ -51,9 +58,9 @@ class Blockchain:
 
     def get_last_block_value(self) -> Block:
         """Returns  the last block value of the current blockchain if exists, otherwise returns None"""
-        if len(self.chain) < 1:
+        if len(self.__chain) < 1:
             return None
-        return self.chain[-1]
+        return self.__chain[-1]
 
     def add_transaction(self, recipient: str, sender, amount=1.0) -> bool:
         """Appends a new value as well as the last block value to the blockchain.
@@ -65,7 +72,7 @@ class Blockchain:
         """
         transaction = Transaction(sender, recipient, amount)
         if Verification.is_valid_transaction(transaction, self.get_balance):
-            self.open_transactions.append(transaction)
+            self.__open_transactions.append(transaction)
             self.save_data()
             print(f'Added transaction: {transaction}')
             return True
@@ -73,19 +80,19 @@ class Blockchain:
         return False
 
     def get_balance(self) -> float:
-        participant = self.hosting_node
+        participant = self.__hosting_node
         tx_sender = [[tx.amount for tx in block.transactions if tx.sender == participant]
-                     for block in self.chain]
+                     for block in self.__chain]
         open_tx_sender = [
-            tx.amount for tx in self.open_transactions if tx.sender == participant]
+            tx.amount for tx in self.__open_transactions if tx.sender == participant]
         tx_sender.append(open_tx_sender)
         amount_sent = functools.reduce(
             lambda tx_sum, tx_amt: tx_sum + sum(tx_amt) if len(tx_amt) > 0 else tx_sum, tx_sender, 0)
 
         tx_recipient = [[tx.amount for tx in block.transactions if tx.recipient == participant]
-                        for block in self.chain]
+                        for block in self.__chain]
         open_tx_recipient = [tx.amount
-                             for tx in self.open_transactions if tx.recipient == participant]
+                             for tx in self.__open_transactions if tx.recipient == participant]
         tx_recipient.append(open_tx_recipient)
         amount_received = functools.reduce(
             lambda tx_sum, tx_amt: tx_sum + sum(tx_amt) if len(tx_amt) > 0 else tx_sum, tx_recipient, 0)
@@ -93,25 +100,25 @@ class Blockchain:
         return amount_received - amount_sent
 
     def pow(self) -> int:
-        last_block = self.chain[-1]
+        last_block = self.__chain[-1]
         last_hash = hash_util.calculate_block_hash(last_block)
         proof = 0
-        while not Verification.is_valid_proof(self.open_transactions, last_hash, proof):
+        while not Verification.is_valid_proof(self.__open_transactions, last_hash, proof):
             proof += 1
         return proof
 
     def mine_block(self) -> None:
-        last_block = self.chain[-1]
+        last_block = self.__chain[-1]
         last_block_hash = hash_util.calculate_block_hash(last_block)
         proof = self.pow()
         reward_transaction = Transaction(
-            'MINING', self.hosting_node, MINING_REWARD)
-        copied_transactions = self.open_transactions[:]
+            'MINING', self.__hosting_node, MINING_REWARD)
+        copied_transactions = self.__open_transactions[:]
         copied_transactions.append(reward_transaction)
 
-        new_block = Block(len(self.chain), last_block_hash,
+        new_block = Block(len(self.__chain), last_block_hash,
                           copied_transactions, proof)
-        self.chain.append(new_block)
+        self.__chain.append(new_block)
         print(f'Added new block to the chain: {new_block}')
-        self.open_transactions = []
+        self.__open_transactions = []
         self.save_data()
