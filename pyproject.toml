@@ -6,6 +6,7 @@ authors = ["Michal Slota <michal.slota@elevup.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.8"
+pycryptodome = "^3.14.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"

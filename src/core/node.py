@@ -1,16 +1,15 @@
 from typing import Iterable, List
-# import uuid
 
-from blockchain import Blockchain
+from core.blockchain import Blockchain
+from core.wallet import Wallet
 from util.verification import Verification
 
 
 class Node:
 
     def __init__(self):
-        # self.id = str(uuid.uuid4())
-        self.id = 'malanius'
-        self.blockchain = Blockchain(self.id)
+        self.wallet = Wallet()
+        self.blockchain = Blockchain(self.wallet.public_key)
 
     def get_transaction_value(self):
         """Returns the transaction amount from user input."""
@@ -38,12 +37,14 @@ class Node:
             print('3: Print the blocks')
             print('4: Print open transactions')
             print('5: Validate open transactions')
+            print('6: Create wallet')
+            print('7: Load wallet')
             print('q: Exit')
             user_choice = self.get_user_choice()
 
             if user_choice == '1':
                 recipient, amount = self.get_transaction_value()
-                if self.blockchain.add_transaction(recipient, self.id, amount):
+                if self.blockchain.add_transaction(recipient, self.wallet.public_key, amount):
                     print('Transaction sucessful.')
                 else:
                     print('Transaction failed!')
@@ -59,6 +60,10 @@ class Node:
                     print('All open transactions are valid.')
                 else:
                     print('There are invalid transactions!')
+            elif user_choice == '6':
+                self.wallet.create_keys()
+            elif user_choice == '7':
+                pass
             elif user_choice == 'q':
                 waiting_for_input = False
             else:
@@ -67,7 +72,7 @@ class Node:
                 print('Invalid blocks in the chain!')
                 break
             print(
-                f'Balance of {self.id}: {self.blockchain.get_balance():6.2f}')
+                f'Balance of {self.wallet.public_key}: {self.blockchain.get_balance():6.2f}')
         else:
             print('User left.')
 
