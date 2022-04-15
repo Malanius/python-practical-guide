@@ -1,3 +1,5 @@
+"""Provides verification helper methods."""
+
 import hashlib
 from typing import Callable, List
 
