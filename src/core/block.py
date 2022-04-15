@@ -1,8 +1,8 @@
 from time import time
 from typing import List
 
+from core.transaction import Transaction
 from util.printable import Printable
-from transaction import Transaction
 
 
 class Block(Printable):

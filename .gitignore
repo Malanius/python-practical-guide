@@ -1,4 +1,9 @@
 *.pyc
+
+# project-specific files
 blockchain.json
+wallet.keys
+
+# assigments files
 files_assigment.json
 files_assigment.rick

@@ -3,6 +3,8 @@ import binascii
 import Crypto.Random
 from Crypto.PublicKey import RSA
 
+KEY_FILE = 'wallet.keys'
+
 
 class Wallet:
     def __init__(self) -> None:
@@ -13,9 +15,26 @@ class Wallet:
         private_key, public_key = self.generate_keys()
         self.private_key = private_key
         self.public_key = public_key
+        self.save_keys()
+
+    def save_keys(self):
+        try:
+            with open(KEY_FILE, 'w') as key_file:
+                key_file.write(self.public_key)
+                key_file.write('\n')
+                key_file.write(self.private_key)
+        except (IOError, IndexError):
+            print('Failed to save keys to file!')
 
     def load_keys(self):
-        pass
+        try:
+            with open(KEY_FILE, 'r') as key_file:
+                keys = key_file.readlines()
+                print(f'---> {keys} <---')
+                self.public_key = keys[0][:-1]
+                self.private_key = keys[1]
+        except (IOError, IndexError):
+            print('Failed to load keys from file!')
 
     def generate_keys(self):
         private_key = RSA.generate(2048, Crypto.Random.new().read)
