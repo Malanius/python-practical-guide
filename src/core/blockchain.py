@@ -5,6 +5,7 @@ from typing import List
 
 from core.block import Block
 from core.transaction import Transaction
+from core.wallet import Wallet
 from util import hash_util
 from util.verification import Verification
 
@@ -75,15 +76,14 @@ class Blockchain:
             :recipient: The recipient of the coins
             :amount: The amount transfered  (default [1.0]).
         """
-        transaction = Transaction(sender, recipient, signature, amount)
         if self.__hosting_node == None:
             return False
+        transaction = Transaction(sender, recipient, signature, amount)
         if Verification.is_valid_transaction(transaction, self.get_balance):
             self.__open_transactions.append(transaction)
             self.save_data()
             print(f'Added transaction: {transaction}')
             return True
-
         return False
 
     def get_balance(self) -> float:
@@ -121,10 +121,14 @@ class Blockchain:
         reward_transaction = Transaction(
             'MINING', self.__hosting_node, '', MINING_REWARD)
         copied_transactions = self.__open_transactions[:]
+        for tx in copied_transactions:
+            if not Wallet.verify_transaction(tx):
+                print(f'Invalid transaction in new block! {tx}')
+                return False
         copied_transactions.append(reward_transaction)
-
         new_block = Block(len(self.__chain), last_block_hash,
                           copied_transactions, proof)
+
         self.__chain.append(new_block)
         print(f'Added new block to the chain: {new_block}')
         self.__open_transactions = []

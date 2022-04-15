@@ -6,6 +6,7 @@ from typing import Callable, List
 from util import hash_util
 from core.block import Block
 from core.transaction import Transaction
+from core.wallet import Wallet
 
 
 class Verification:
@@ -35,11 +36,13 @@ class Verification:
         return True
 
     @staticmethod
-    def is_valid_transaction(transaction: Transaction, get_balance: Callable):
-        sender_balance = get_balance()
-        return sender_balance >= transaction.amount
+    def is_valid_transaction(transaction: Transaction, get_balance: Callable, check_funds=True):
+        if check_funds:
+            sender_balance = get_balance()
+            return sender_balance >= transaction.amount and Wallet.verify_transaction(transaction)
+        return Wallet.verify_transaction(transaction)
 
     @classmethod
     def verify_transactions(cls, open_transactions, get_balance):
         """Verifies all open transactions."""
-        return all([cls.is_valid_transaction(tx, get_balance) for tx in open_transactions])
+        return all([cls.is_valid_transaction(tx, get_balance, False) for tx in open_transactions])

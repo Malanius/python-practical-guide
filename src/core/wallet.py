@@ -5,6 +5,8 @@ from Crypto.PublicKey import RSA
 from Crypto.Signature import pkcs1_15
 from Crypto.Hash import SHA256
 
+from core.transaction import Transaction
+
 KEY_FILE = 'wallet.keys'
 
 
@@ -44,10 +46,24 @@ class Wallet:
         return (binascii.hexlify(private_key.exportKey(format='DER')).decode('ascii'),
                 binascii.hexlify(public_key.exportKey(format='DER')).decode('ascii'))
 
-    def sign_transaction(self, sender, recipient, amount):
+    def sign_transaction(self, sender: str, recipient: str, amount: float):
         signer_identity = pkcs1_15.new(RSA.import_key(
             binascii.unhexlify(self.private_key)))
         transaction_hash = SHA256.new(
             (f"{sender}{recipient}{amount}").encode('utf8'))
         signature = signer_identity.sign(transaction_hash)
         return binascii.hexlify(signature).decode('ascii')
+
+    @staticmethod
+    def verify_transaction(transaction: Transaction):
+        public_key = RSA.import_key(binascii.unhexlify(transaction.sender))
+        verifier = pkcs1_15.new(public_key)
+        transaction_hash = SHA256.new(
+            (f"{transaction.sender}{transaction.recipient}{transaction.amount}").encode('utf8'))
+        try:
+            verifier.verify(transaction_hash,
+                            binascii.unhexlify(transaction.signature))
+            return True
+        except ValueError:
+            print('Invalid signature detected!')
+            return False
