@@ -1,7 +1,7 @@
 from collections import OrderedDict
 import typing
 
-from printable import Printable
+from util.printable import Printable
 
 
 class Transaction(Printable):

@@ -2,7 +2,7 @@ from typing import Iterable, List
 # import uuid
 
 from blockchain import Blockchain
-from verification import Verification
+from util.verification import Verification
 
 
 class Node:

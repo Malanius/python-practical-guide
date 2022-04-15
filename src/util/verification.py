@@ -1,9 +1,9 @@
 import hashlib
 from typing import Callable, List
 
-import hash_util
-from block import Block
-from transaction import Transaction
+from util import hash_util
+from core.block import Block
+from core.transaction import Transaction
 
 
 class Verification:

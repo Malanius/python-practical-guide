@@ -1,7 +1,7 @@
 from time import time
 from typing import List
 
-from printable import Printable
+from util.printable import Printable
 from transaction import Transaction
 
 

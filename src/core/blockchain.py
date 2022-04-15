@@ -1,11 +1,11 @@
 from copy import deepcopy
 import functools
 import json
-from typing import List, TypedDict
+from typing import List
 
-import hash_util
 from block import Block
-from verification import Verification
+from util import hash_util
+from util.verification import Verification
 from transaction import Transaction
 
 MINING_REWARD = 10
