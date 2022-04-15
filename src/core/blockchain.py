@@ -32,7 +32,7 @@ class Blockchain:
         return self.__open_transactions[:]
 
     def convert_transactions(self, transactions) -> List[Transaction]:
-        return [Transaction(tx['sender'], tx['recipient'], tx['amount']) for tx in transactions]
+        return [Transaction(tx['sender'], tx['recipient'], tx['signature'], tx['amount']) for tx in transactions]
 
     def load_data(self) -> None:
         try:
@@ -67,7 +67,7 @@ class Blockchain:
             return None
         return self.__chain[-1]
 
-    def add_transaction(self, recipient: str, sender, amount=1.0) -> bool:
+    def add_transaction(self, recipient: str, sender, signature, amount=1.0) -> bool:
         """Appends a new value as well as the last block value to the blockchain.
 
         Arguments:
@@ -75,7 +75,7 @@ class Blockchain:
             :recipient: The recipient of the coins
             :amount: The amount transfered  (default [1.0]).
         """
-        transaction = Transaction(sender, recipient, amount)
+        transaction = Transaction(sender, recipient, signature, amount)
         if self.__hosting_node == None:
             return False
         if Verification.is_valid_transaction(transaction, self.get_balance):
@@ -119,7 +119,7 @@ class Blockchain:
         last_block_hash = hash_util.calculate_block_hash(last_block)
         proof = self.pow()
         reward_transaction = Transaction(
-            'MINING', self.__hosting_node, MINING_REWARD)
+            'MINING', self.__hosting_node, '', MINING_REWARD)
         copied_transactions = self.__open_transactions[:]
         copied_transactions.append(reward_transaction)
 
