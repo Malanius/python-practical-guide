@@ -1,4 +1,4 @@
-from typing import Iterable, List
+from typing import Iterable
 
 from core.blockchain import Blockchain
 from core.wallet import Wallet
@@ -9,7 +9,7 @@ class Node:
 
     def __init__(self):
         self.wallet = Wallet()
-        self.blockchain = Blockchain(self.wallet.public_key)
+        self.blockchain = None
 
     def get_transaction_value(self):
         """Returns the transaction amount from user input."""
@@ -49,7 +49,10 @@ class Node:
                 else:
                     print('Transaction failed!')
             elif user_choice == '2':
-                self.blockchain.mine_block()
+                if self.blockchain == None:
+                    print('Mining failed. Got no wallet?')
+                else:
+                    self.blockchain.mine_block()
             elif user_choice == '3':
                 self.print_iterable(self.blockchain.chain, 'Blocks in chain:')
             elif user_choice == '4':
@@ -62,17 +65,19 @@ class Node:
                     print('There are invalid transactions!')
             elif user_choice == '6':
                 self.wallet.create_keys()
+                self.blockchain = Blockchain(self.wallet.public_key)
             elif user_choice == '7':
                 pass
             elif user_choice == 'q':
                 waiting_for_input = False
             else:
                 print('Invalid choice!')
-            if not Verification.is_valid_chain(self.blockchain.chain):
-                print('Invalid blocks in the chain!')
-                break
-            print(
-                f'Balance of {self.wallet.public_key}: {self.blockchain.get_balance():6.2f}')
+            if self.blockchain != None:
+                if not Verification.is_valid_chain(self.blockchain.chain):
+                    print('Invalid blocks in the chain!')
+                    break
+                print(
+                    f'Balance of {self.wallet.public_key}: {self.blockchain.get_balance():6.2f}')
         else:
             print('User left.')
 

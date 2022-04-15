@@ -3,10 +3,10 @@ import functools
 import json
 from typing import List
 
-from block import Block
+from core.block import Block
+from core.transaction import Transaction
 from util import hash_util
 from util.verification import Verification
-from transaction import Transaction
 
 MINING_REWARD = 10
 DATA_FILE = 'blockchain.json'
@@ -76,6 +76,8 @@ class Blockchain:
             :amount: The amount transfered  (default [1.0]).
         """
         transaction = Transaction(sender, recipient, amount)
+        if self.__hosting_node == None:
+            return False
         if Verification.is_valid_transaction(transaction, self.get_balance):
             self.__open_transactions.append(transaction)
             self.save_data()
@@ -127,3 +129,4 @@ class Blockchain:
         print(f'Added new block to the chain: {new_block}')
         self.__open_transactions = []
         self.save_data()
+        return True
