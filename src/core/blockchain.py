@@ -68,7 +68,7 @@ class Blockchain:
             return None
         return self.__chain[-1]
 
-    def add_transaction(self, recipient: str, sender, signature, amount=1.0) -> bool:
+    def add_transaction(self, recipient: str, sender, signature, amount=1.0) -> Union[Transaction, None]:
         """Appends a new value as well as the last block value to the blockchain.
 
         Arguments:
@@ -77,14 +77,14 @@ class Blockchain:
             :amount: The amount transfered  (default [1.0]).
         """
         if self.__hosting_node == None:
-            return False
+            return None
         transaction = Transaction(sender, recipient, signature, amount)
         if Verification.is_valid_transaction(transaction, self.get_balance):
             self.__open_transactions.append(transaction)
             self.save_data()
             print(f'Added transaction: {transaction}')
-            return True
-        return False
+            return transaction
+        return None
 
     def get_balance(self) -> Union[float, None]:
         participant = self.__hosting_node
