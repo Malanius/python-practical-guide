@@ -1,3 +1,4 @@
+from urllib import response
 from flask import Flask, jsonify
 from flask_cors import CORS
 
@@ -14,6 +15,34 @@ blockchain = Blockchain(wallet.public_key)
 @app.route('/', methods=['GET'])
 def get_ui():
     return 'Works!'
+
+
+@app.route('/wallet/create-keys', methods=['POST'])
+def create_wallet():
+    wallet.create_keys()
+    if wallet.save_keys():
+        global blockchain
+        blockchain = Blockchain(wallet.public_key)
+        response = {
+            'public_key': wallet.public_key,
+            'private_key': wallet.private_key,
+        }
+        return jsonify(response), 201
+    else:
+        response = {
+            'message': 'Saving keys failed!'
+        }
+        return jsonify(response), 500
+
+
+@app.route('/wallet/load-keys', methods=['POST'])
+def load_wallet():
+    if wallet.load_keys():
+        global blockchain
+        blockchain = Blockchain(wallet.public_key)
+        return jsonify({'message': 'Keys loaded.'}), 200
+    else:
+        return jsonify({'message': 'Failed to load keys!'}), 500
 
 
 @app.route('/chain', methods=['GET'])

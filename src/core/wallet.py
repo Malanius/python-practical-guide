@@ -27,8 +27,10 @@ class Wallet:
                 key_file.write(self.public_key)
                 key_file.write('\n')
                 key_file.write(self.private_key)
+                return True
         except (IOError, IndexError):
             print('Failed to save keys to file!')
+            return False
 
     def load_keys(self):
         try:
@@ -37,8 +39,10 @@ class Wallet:
                 print(f'---> {keys} <---')
                 self.public_key = keys[0][:-1]
                 self.private_key = keys[1]
+                return True
         except (IOError, IndexError):
             print('Failed to load keys from file!')
+            return False
 
     def generate_keys(self):
         private_key = RSA.generate(2048, Crypto.Random.new().read)
