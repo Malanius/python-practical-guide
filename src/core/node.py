@@ -56,6 +56,13 @@ def get_balance():
     return jsonify({'balance': balance}), 200
 
 
+@app.route('/transactions', methods=['GET'])
+def get_open_transactions():
+    transactions = blockchain.get_open_transactions()
+    dumpable_transactions = [tx.to_ordered_dict() for tx in transactions]
+    return jsonify(dumpable_transactions), 200
+
+
 @app.route('/transactions', methods=['POST'])
 def add_transaction():
     if wallet.public_key == None:
