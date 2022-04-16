@@ -1,4 +1,3 @@
-from urllib import response
 from flask import Flask, jsonify
 from flask_cors import CORS
 
@@ -43,6 +42,17 @@ def load_wallet():
         return jsonify({'message': 'Keys loaded.'}), 200
     else:
         return jsonify({'message': 'Failed to load keys!'}), 500
+
+
+@app.route('/wallet/balance', methods=['GET'])
+def get_balance():
+    balance = blockchain.get_balance()
+    if balance == None:
+        return jsonify({
+            'message': 'No wallet set up to get balance!'
+        }), 400
+
+    return jsonify({'balance': balance}), 200
 
 
 @app.route('/chain', methods=['GET'])
