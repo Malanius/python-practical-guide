@@ -1,7 +1,7 @@
 from copy import deepcopy
 import functools
 import json
-from typing import List
+from typing import List, Union
 
 from core.block import Block
 from core.transaction import Transaction
@@ -114,7 +114,9 @@ class Blockchain:
             proof += 1
         return proof
 
-    def mine_block(self) -> None:
+    def mine_block(self) -> Union[Block, None]:
+        if self.__hosting_node == None:
+            return None
         last_block = self.__chain[-1]
         last_block_hash = hash_util.calculate_block_hash(last_block)
         proof = self.pow()
@@ -124,7 +126,7 @@ class Blockchain:
         for tx in copied_transactions:
             if not Wallet.verify_transaction(tx):
                 print(f'Invalid transaction in new block! {tx}')
-                return False
+                return None
         copied_transactions.append(reward_transaction)
         new_block = Block(len(self.__chain), last_block_hash,
                           copied_transactions, proof)
@@ -133,4 +135,4 @@ class Blockchain:
         print(f'Added new block to the chain: {new_block}')
         self.__open_transactions = []
         self.save_data()
-        return True
+        return new_block
