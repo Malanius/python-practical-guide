@@ -1,6 +1,5 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
-from core.transaction import Transaction
 
 from core.wallet import Wallet
 from core.blockchain import Blockchain
@@ -14,7 +13,7 @@ blockchain = Blockchain(wallet.public_key)
 
 @app.route('/', methods=['GET'])
 def get_ui():
-    return 'Works!'
+    return send_from_directory('../ui', 'node.html')
 
 
 @app.route('/wallet/create-keys', methods=['POST'])
