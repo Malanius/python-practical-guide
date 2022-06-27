@@ -291,7 +291,7 @@
           onCreateWallet: function () {
             // Send Http request to create a new wallet (and return keys)
             axios
-              .post("/wallet/create-keys")
+              .post("/wallet")
               .then((response) => {
                 this.success =
                   "Wallet Created! Public key: " +
@@ -299,6 +299,8 @@
                   " Private key: " +
                   response.data.private_key;
                 this.error = null;
+                this.wallet = response.data;
+                this.funds = response.data.funds;
               })
               .catch((error) => {
                 this.error = error.data.message;
@@ -307,6 +309,23 @@
           },
           onLoadWallet: function () {
             // Send Http request to load an existing wallet (from a file on the server)
+            this.walletLoading = true;
+            axios
+              .get("/wallet")
+              .then((response) => {
+                this.wallet = response.data;
+                this.walletLoading = false;
+                this.error = null;
+                this.funds = response.data.funds;
+                this.success = "Wallet Loaded!";
+              })
+              .catch((error) => {
+                this.error = error.data.message;
+                this.success = null;
+                this.walletLoading = false;
+                this.wallet = null;
+                this.funds = null;
+              });
           },
           onSendTx: function () {
             // Send Transaction to backend

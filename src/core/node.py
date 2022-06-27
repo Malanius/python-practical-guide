@@ -1,3 +1,4 @@
+from urllib import response
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 
@@ -16,7 +17,7 @@ def get_ui():
     return send_from_directory('../ui', 'node.html')
 
 
-@app.route('/wallet/create-keys', methods=['POST'])
+@app.route('/wallet', methods=['POST'])
 def create_wallet():
     wallet.create_keys()
     if wallet.save_keys():
@@ -25,6 +26,7 @@ def create_wallet():
         response = {
             'public_key': wallet.public_key,
             'private_key': wallet.private_key,
+            'funds': blockchain.get_balance(),
         }
         return jsonify(response), 201
     else:
@@ -34,12 +36,17 @@ def create_wallet():
         return jsonify(response), 500
 
 
-@app.route('/wallet/load-keys', methods=['POST'])
+@app.route('/wallet', methods=['GET'])
 def load_wallet():
     if wallet.load_keys():
         global blockchain
         blockchain = Blockchain(wallet.public_key)
-        return jsonify({'message': 'Keys loaded.'}), 200
+        response = {
+            'public_key': wallet.public_key,
+            'private_key': wallet.private_key,
+            'funds': blockchain.get_balance(),
+        }
+        return jsonify(response), 200
     else:
         return jsonify({'message': 'Failed to load keys!'}), 500
 
@@ -47,12 +54,18 @@ def load_wallet():
 @app.route('/wallet/balance', methods=['GET'])
 def get_balance():
     balance = blockchain.get_balance()
-    if balance == None:
-        return jsonify({
-            'message': 'No wallet set up to get balance!'
-        }), 400
-
-    return jsonify({'balance': balance}), 200
+    if balance != None:
+        response = {
+            'message': 'Fetched balance successfully.',
+            'funds': balance
+        }
+        return jsonify(response), 200
+    else:
+        response = {
+            'messsage': 'Loading balance failed.',
+            'wallet_set_up': wallet.public_key != None
+        }
+        return jsonify(response), 500
 
 
 @app.route('/transactions', methods=['GET'])
@@ -65,28 +78,47 @@ def get_open_transactions():
 @app.route('/transactions', methods=['POST'])
 def add_transaction():
     if wallet.public_key == None:
-        return jsonify({'message': 'No wallet set up!'}), 400
+        response = {
+            'message': 'No wallet set up.'
+        }
+        return jsonify(response), 400
 
-    request_data = request.get_json()
-    if not request_data:
-        print('No request body!')
-        return jsonify({'message': 'No data!'}), 400
+    values = request.get_json()
+    if not values:
+        response = {
+            'message': 'No data found.'
+        }
+        return jsonify(response), 400
 
-    required_fileds = ['recipient', 'amount']
-    if not all(field in request_data for field in required_fileds):
-        return jsonify({'message': 'Missing required data!'}), 400
+    required_fields = ['recipient', 'amount']
+    if not all(field in values for field in required_fields):
+        response = {
+            'message': 'Required data is missing.'
+        }
+        return jsonify(response), 400
 
-    recipient = request_data['recipient']
-    amount = request_data['amount']
+    recipient = values['recipient']
+    amount = values['amount']
     signature = wallet.sign_transaction(wallet.public_key, recipient, amount)
-    new_transaction = blockchain.add_transaction(
+    success = blockchain.add_transaction(
         recipient, wallet.public_key, signature, amount)
-
-    if new_transaction == None:
-        return jsonify({'message': 'Adding transaction failed!'}), 400
-
-    return jsonify({'message': 'Transaction sucessful.',
-                    'transaction': new_transaction.to_ordered_dict()}), 201
+    if success:
+        response = {
+            'message': 'Successfully added transaction.',
+            'transaction': {
+                'sender': wallet.public_key,
+                'recipient': recipient,
+                'amount': amount,
+                'signature': signature
+            },
+            'funds': blockchain.get_balance()
+        }
+        return jsonify(response), 201
+    else:
+        response = {
+            'message': 'Creating a transaction failed.'
+        }
+        return jsonify(response), 500
 
 
 @app.route('/chain', methods=['GET'])
