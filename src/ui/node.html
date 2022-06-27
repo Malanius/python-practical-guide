@@ -329,14 +329,27 @@
           },
           onSendTx: function () {
             // Send Transaction to backend
-            if (Math.random() > 0.5) {
-              this.error = null;
-              this.success = "Successfully stored transaction!";
-              this.funds = this.funds - this.outgoingTx.amount;
-            } else {
-              this.success = null;
-              this.error = "Something went wrong!";
-            }
+            this.txLoading = true;
+            axios
+              .post("/transactions", {
+                recipient: this.outgoingTx.recipient,
+                amount: this.outgoingTx.amount,
+              })
+              .then((response) => {
+                this.success = response.data.message;
+                this.error = null;
+                this.txLoading = false;
+                this.outgoingTx = {
+                  recipient: "",
+                  amount: 0,
+                };
+                this.funds = response.data.funds;
+              })
+              .catch((error) => {
+                this.error = error.response.data.message;
+                this.success = null;
+                this.txLoading = false;
+              });
           },
           onMine: function () {
             axios
