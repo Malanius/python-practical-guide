@@ -303,7 +303,7 @@
                 this.funds = response.data.funds;
               })
               .catch((error) => {
-                this.error = error.data.message;
+                this.error = error.response.data.message;
                 this.success = null;
               });
           },
@@ -320,7 +320,7 @@
                 this.success = "Wallet Loaded!";
               })
               .catch((error) => {
-                this.error = error.data.message;
+                this.error = error.response.data.message;
                 this.success = null;
                 this.walletLoading = false;
                 this.wallet = null;
@@ -339,14 +339,17 @@
             }
           },
           onMine: function () {
-            if (Math.random() > 0.5) {
-              this.error = null;
-              this.success = "Successfully mined coins!";
-              this.funds = this.funds + 10;
-            } else {
-              this.success = null;
-              this.error = "Something went wrong!";
-            }
+            axios
+              .post("/mine")
+              .then((response) => {
+                this.success = response.data.message;
+                this.error = null;
+                this.funds = response.data.funds;
+              })
+              .catch((error) => {
+                this.error = error.response.data.message;
+                this.success = null;
+              });
           },
           onLoadData: function () {
             this.dataLoading = true;

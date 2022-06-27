@@ -132,17 +132,21 @@ def get_chain():
 def mine_block():
     block = blockchain.mine_block()
     if block != None:
+        dict_block = block.__dict__.copy()
+        dict_block['transactions'] = [
+            tx.__dict__ for tx in dict_block['transactions']]
         response = {
-            'message': 'Block added sucesfully.',
-            'block': block.convert_to_dumpable_block()
+            'message': 'Block added successfully.',
+            'block': dict_block,
+            'funds': blockchain.get_balance()
         }
         return jsonify(response), 201
     else:
         response = {
-            'message': 'Adding block failed!',
+            'message': 'Adding a block failed.',
             'wallet_set_up': wallet.public_key != None
         }
-        return jsonify(response), 400
+        return jsonify(response), 500
 
 
 if __name__ == '__main__':
