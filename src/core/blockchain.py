@@ -60,7 +60,7 @@ class Blockchain:
                 file.write(json.dumps({
                     'blockchain': dumpable_chain,
                     'open_transactions': dumpable_transactions,
-                    'connected_nodes': list(self.__peer_nodes)
+                    'peer_nodes': list(self.__peer_nodes)
                 }))
         except IOError:
             print('Saving data failed!')
@@ -149,3 +149,6 @@ class Blockchain:
     def remove_peer_node(self, node):
         self.__peer_nodes.discard(node)
         self.save_data()
+
+    def get_peer_nodes(self):
+        return list(self.__peer_nodes)
