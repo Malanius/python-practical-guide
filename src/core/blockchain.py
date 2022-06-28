@@ -19,6 +19,7 @@ class Blockchain:
         self.chain: List[Block] = [genesis_block]
         self.__open_transactions: List[Transaction] = []
         self.__hosting_node = hosting_node
+        self.__peer_nodes = set()
         self.load_data()
 
     @property
@@ -45,6 +46,7 @@ class Blockchain:
                 file_data['open_transactions'])
             self.chain = blockchain
             self.__open_transactions = open_transactions
+            self.__peer_nodes = set(file_data['peer_nodes'])
         except (IOError, IndexError):
             print(f'File {DATA_FILE} not found or empty!')
 
@@ -57,7 +59,8 @@ class Blockchain:
                     transaction.__dict__ for transaction in self.__open_transactions]
                 file.write(json.dumps({
                     'blockchain': dumpable_chain,
-                    'open_transactions': dumpable_transactions
+                    'open_transactions': dumpable_transactions,
+                    'connected_nodes': list(self.__peer_nodes)
                 }))
         except IOError:
             print('Saving data failed!')
@@ -138,3 +141,11 @@ class Blockchain:
         self.__open_transactions = []
         self.save_data()
         return new_block
+
+    def add_peer_node(self, node):
+        self.__peer_nodes.add(node)
+        self.save_data()
+
+    def remove_peer_node(self, node):
+        self.__peer_nodes.discard(node)
+        self.save_data()
